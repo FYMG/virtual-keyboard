@@ -15,7 +15,7 @@
     grid-template-rows: repeat(5, 1fr)
     max-width: 1280px
     border-radius: 15px
-    background-color: gray
+    background: hsl(0, 0%, 8%)
     @media (max-width: 550px)
       padding: 5px
       border-radius: 5px
@@ -26,14 +26,25 @@
     font-weight: 700
     height: 50px
     border-radius: 5px
-    color: black
-    background-color: darkgray
+    color: hsl(0, 0%, 85%)
+    background: hsl(0, 0%, 8%)
+    border: 2px solid hsla(0, 0%, 25%, 0.2)
+    box-shadow: -5px -5px 10px hsl(0%, 0%, 100%, 0.01), -2px -2px  6px hsl(0%, 0%, 100%, 0.03),2px  2px  5px hsl(0, 0%, 0%, 0.3),5px  5px 10px hsl(0, 0%, 0%, 0.3)
     @media (max-width: 550px)
       font-size: 0.6rem
     @media (max-width: 430px)
       font-size: 0.4rem
     @media (max-width: 730px)
       height: auto
+    &:hover
+      transform: translate3D(0, 0, 35px)
+    &:active,
+    &[data-selected]:not([data-selected="false"])
+      transform: translate3D(0, 0, 25px)
+      border-color: hsla(0, 0%, 25%, 0.2)
+      box-shadow: -5px -5px 10px hsl(0%, 0%, 100%, 0.01)
+
+
     // .keyboard__key_space
     &_space
       grid-column-end: span 6
@@ -52,5 +63,5 @@
     // .keyboard__key_shift
     &_shift
 
-     &:active
+    &:active
 
