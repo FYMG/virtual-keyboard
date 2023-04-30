@@ -1,16 +1,56 @@
 .keyboard
+  bottom: 0
+  width: 100%
+  position: fixed
+  overflow: hidden
+  // .keyboard__keys
+  &__keys
+    font-size: 1.05rem
+    box-sizing: border-box
+    padding: 10px
+    z-index: 7
+    margin: 0 auto
+    display: grid
+    grid-template-columns: repeat(15, 1fr)
+    grid-template-rows: repeat(5, 1fr)
+    max-width: 1280px
+    border-radius: 15px
+    background-color: gray
+    @media (max-width: 550px)
+      padding: 5px
+      border-radius: 5px
   // .keyboard__key
   &__key
     text-align: center
-    font-family: 'Sigmar', cursive
+    font-family: 'Oswald', sans-serif
+    font-weight: 700
+    height: 50px
+    border-radius: 5px
+    color: black
+    background-color: darkgray
+    @media (max-width: 550px)
+      font-size: 0.6rem
+    @media (max-width: 430px)
+      font-size: 0.4rem
+    @media (max-width: 730px)
+      height: auto
     // .keyboard__key_space
     &_space
+      grid-column-end: span 6
     // .keyboard__key_caps
     &_caps
+      grid-column-end: span 2
     // .keyboard__key_medium
     &_medium
+      grid-column-end: span 2
     // .keyboard__key_win
     &_win
+    // .keyboard__key_alt
+    &_alt
+    // .keyboard__key_ctrl
+    &_ctrl
+    // .keyboard__key_shift
+    &_shift
 
-    &:active
+     &:active
 
