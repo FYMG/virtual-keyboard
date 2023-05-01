@@ -12,6 +12,8 @@ const createMain = () => {
   main.className = CSS_STYLES.main;
   const textArea = document.createElement('textarea');
   textArea.classList.add(CSS_STYLES.textArea, CSS_STYLES.virtualInput);
+  textArea.setAttribute('wrap', 'hard');
+  textArea.setAttribute('cols', '90');
   textArea.placeholder = 'Клавиатура создана в операционной системе Windows\nДля переключения языка комбинация: левыe ctrl + alt';
   main.append(textArea);
   return main;

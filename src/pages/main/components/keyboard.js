@@ -58,10 +58,10 @@ export default class Keyboard {
       KeyA: [this.insertButtonText],
       Backspace: [this.pressBackspace],
       Delete: [this.pressDel],
-      ArrowUp: [this.pressArrow],
-      ArrowDown: [this.pressArrow],
-      ArrowLeft: [this.pressArrow],
-      ArrowRight: [this.pressArrow],
+      ArrowUp: [this.insertArrowLikeText],
+      ArrowDown: [this.insertArrowLikeText],
+      ArrowLeft: [this.insertArrowLikeText],
+      ArrowRight: [this.insertArrowLikeText],
       MetaLeft: [this.pressMeta],
       default: [this.insertButtonText],
     };
@@ -310,7 +310,7 @@ export default class Keyboard {
   insertTab(clickedKey) {
     this.togglePressedKey(clickedKey);
     if (this.pressedButtons.includes(clickedKey)) {
-      this.insertTextAtTextAreaCursor('    ');
+      this.insertTextAtTextAreaCursor('\t');
     }
     this.updateKeyboardButtons();
   }
@@ -327,6 +327,20 @@ export default class Keyboard {
     this.togglePressedKey(clickedKey);
     if (this.pressedButtons.includes(clickedKey)) {
       this.deleteTextAtTextAreaCursor(false, true);
+    }
+    this.updateKeyboardButtons();
+  }
+
+  insertArrowLikeText(clickedKey) {
+    const text = {
+      ArrowUp: KEYS_TEXT.arrowUp,
+      ArrowLeft: KEYS_TEXT.arrowLeft,
+      ArrowDown: KEYS_TEXT.arrowDown,
+      ArrowRight: KEYS_TEXT.arrowRight,
+    };
+    this.togglePressedKey(clickedKey);
+    if (this.pressedButtons.includes(clickedKey)) {
+      this.insertTextAtTextAreaCursor(text[clickedKey]);
     }
     this.updateKeyboardButtons();
   }
@@ -425,14 +439,23 @@ export default class Keyboard {
     if (startPos !== endPos) {
       this.textAreaLink.value = this.textAreaLink.value.substring(0, startPos)
         + this.textAreaLink.value.substring(endPos, this.textAreaLink.value.length);
+      this.textAreaLink.selectionStart = startPos;
+      this.textAreaLink.selectionEnd = startPos;
     } else {
       if (prev) {
+        if (startPos === 0) {
+          return;
+        }
         this.textAreaLink.value = this.textAreaLink.value.substring(0, startPos - 1)
             + this.textAreaLink.value.substring(endPos, this.textAreaLink.value.length);
+        this.textAreaLink.selectionStart = startPos - 1;
+        this.textAreaLink.selectionEnd = startPos - 1;
       }
       if (next) {
         this.textAreaLink.value = this.textAreaLink.value.substring(0, startPos)
             + this.textAreaLink.value.substring(endPos + 1, this.textAreaLink.value.length);
+        this.textAreaLink.selectionStart = startPos;
+        this.textAreaLink.selectionEnd = startPos;
       }
     }
   }
