@@ -63,7 +63,6 @@ const baseConfig = {
             loader: 'sass-loader',
             options: {
               sourceMap: true,
-              warnRuleAsWarning: false,
             },
           },
         ],
