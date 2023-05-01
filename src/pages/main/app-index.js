@@ -22,7 +22,9 @@ const keyboard = new Keyboard();
 document.body.append(keyboard.createComponent());
 
 const textarea = document.querySelector('.virtual-input');
-textarea.addEventListener('keydown', (e) => { console.log(e); });
+textarea.addEventListener('keydown', (e) => {
+  console.log(e);
+});
 
 // const KeyList = {};
 // // function logKey(e) {

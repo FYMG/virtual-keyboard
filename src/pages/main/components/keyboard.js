@@ -11,8 +11,14 @@ const KEYS_STYLE = {
   key: 'keyboard__key',
   space: 'keyboard__key_space',
   capsLock: 'keyboard__key_caps',
-  medium: 'keyboard__key_medium',
+  capsLockActive: 'keyboard__key_caps_active',
   shift: 'keyboard__key_shift',
+  shiftActive: 'keyboard__key_shift_active',
+  alt: 'keyboard__key_alt',
+  altActive: 'keyboard__key_alt_active',
+  ctrl: 'keyboard__key_ctrl',
+  ctrlActive: 'keyboard__key_ctrl_active',
+  medium: 'keyboard__key_medium',
   meta: 'keyboard__key_win',
   tab: 'keyboard__key_tab',
 };
@@ -37,9 +43,22 @@ export default class Keyboard {
     this.textAreaLink = document.querySelector('.virtual-input');
     this.buttonLinks = [];
     this.capsLock = false;
+    this.alt = false;
+    this.ctrl = false;
     this.shiftDown = false;
     this.pressedButtons = [];
     this.lang = this.initLang();
+    this.lastItteractedKey = null;
+    this.KEYS_EVENTS = {
+      ShiftRight: [this.toggleShift],
+      ShiftLeft: [this.toggleShift],
+      CapsLock: [this.toggleCapsLock],
+      AltLeft: [this.toggleAlt, this.changeLang],
+      AltRight: [this.toggleAlt],
+      ControlLeft: [this.toggleCtrl, this.changeLang],
+      ControlRight: [this.toggleCtrl],
+      default: [() => {}],
+    };
   }
 
   createComponent() {
@@ -59,16 +78,28 @@ export default class Keyboard {
 
   createKeyboardButton(key) {
     const button = document.createElement('button');
+    const keyEvent = (event) => {
+      console.log(event);
+      let clickedKey = event.target.getAttribute('data-key');
+      if (!this.lastItteractedKey) {
+        this.lastItteractedKey = clickedKey;
+      }
+      clickedKey = this.lastItteractedKey === clickedKey && event.type === 'mouseup' ? clickedKey : this.lastItteractedKey;
+      if (Object.keys(this.KEYS_EVENTS).includes(clickedKey)) {
+        this.KEYS_EVENTS[clickedKey].forEach((callback) => {
+          callback.bind(this)(clickedKey);
+        });
+      } else {
+        this.KEYS_EVENTS.default.forEach((callback) => {
+          callback.bind(this)(clickedKey);
+        });
+      }
+      this.lastItteractedKey = event.type === 'mousedown' ? clickedKey : null;
+    };
     button.className = KEYS_STYLE.key;
     button.setAttribute('data-key', key);
-    button.addEventListener('mousedown', () => {
-      const event = new KeyboardEvent('keydown', { code: key, key: KEYS[this.lang][key].shiftUp });
-      this.textAreaLink.dispatchEvent(
-        event,
-      );
-      console.log(event);
-      console.log('!!!!');
-    });
+    button.addEventListener('mousedown', keyEvent);
+    button.addEventListener('mouseup', keyEvent);
     return button;
   }
 
@@ -83,6 +114,11 @@ export default class Keyboard {
           break;
         }
         case 'CapsLock': {
+          if (this.capsLock) {
+            updatedButton.classList.add(KEYS_STYLE.capsLockActive);
+          } else {
+            updatedButton.classList.remove(KEYS_STYLE.capsLockActive);
+          }
           updatedButton.classList.add(KEYS_STYLE.capsLock, KEYS_STYLE.medium);
           updatedButton.textContent = KEYS_TEXT.capsLock;
           break;
@@ -93,11 +129,21 @@ export default class Keyboard {
           break;
         }
         case ('ShiftLeft'): {
+          if (this.shiftDown) {
+            updatedButton.classList.add(KEYS_STYLE.shiftActive);
+          } else {
+            updatedButton.classList.remove(KEYS_STYLE.shiftActive);
+          }
           updatedButton.classList.add(KEYS_STYLE.shift, KEYS_STYLE.medium);
           updatedButton.textContent = KEYS_TEXT.shift;
           break;
         }
         case ('ShiftRight'): {
+          if (this.shiftDown) {
+            updatedButton.classList.add(KEYS_STYLE.shiftActive);
+          } else {
+            updatedButton.classList.remove(KEYS_STYLE.shiftActive);
+          }
           updatedButton.classList.add(KEYS_STYLE.shift, KEYS_STYLE.medium);
           updatedButton.textContent = KEYS_TEXT.shift;
           break;
@@ -135,25 +181,47 @@ export default class Keyboard {
           break;
         }
         case ('AltRight'): {
+          if (this.alt) {
+            updatedButton.classList.add(KEYS_STYLE.altActive);
+          } else {
+            updatedButton.classList.remove(KEYS_STYLE.altActive);
+          }
+          updatedButton.classList.add(KEYS_STYLE.alt);
           updatedButton.textContent = KEYS_TEXT.alt;
           break;
         }
         case ('AltLeft'): {
+          if (this.alt) {
+            updatedButton.classList.add(KEYS_STYLE.altActive);
+          } else {
+            updatedButton.classList.remove(KEYS_STYLE.altActive);
+          }
+          updatedButton.classList.add(KEYS_STYLE.alt);
           updatedButton.textContent = KEYS_TEXT.alt;
           break;
         }
         case ('ControlRight'): {
+          if (this.ctrl) {
+            updatedButton.classList.add(KEYS_STYLE.ctrlActive);
+          } else {
+            updatedButton.classList.remove(KEYS_STYLE.ctrlActive);
+          }
+          updatedButton.classList.add(KEYS_STYLE.ctrl);
           updatedButton.textContent = KEYS_TEXT.ctrl;
           break;
         }
         case ('ControlLeft'): {
+          if (this.ctrl) {
+            updatedButton.classList.add(KEYS_STYLE.ctrlActive);
+          } else {
+            updatedButton.classList.remove(KEYS_STYLE.ctrlActive);
+          }
+          updatedButton.classList.add(KEYS_STYLE.ctrl);
           updatedButton.textContent = KEYS_TEXT.ctrl;
           break;
         }
         default: {
-          let keySet = '';
-          if (this.shiftDown) { keySet = 'shiftDown'; } else if (this.capsLock) { keySet = 'capsLock'; } else { keySet = 'shiftUp'; }
-          updatedButton.textContent = KEYS[this.lang][key][keySet];
+          updatedButton.textContent = this.getKeyText(key);
           break;
         }
       }
@@ -162,24 +230,59 @@ export default class Keyboard {
     console.log(`lang: ${this.lang}, caps: ${this.capsLock}, shift: ${this.shiftDown}`);
   }
 
-  pressCapsLock() {
-    this.capsLock = !this.capsLock;
+  toggleCapsLock(clickedKey) {
+    this.togglePressedKey(clickedKey);
+    if (this.pressedButtons.includes('CapsLock')) {
+      this.capsLock = !this.capsLock;
+    }
     this.updateKeyboardButtons();
   }
 
-  pressShift() {
-    this.shiftDown = !this.shiftDown;
+  toggleShift(clickedKey) {
+    this.togglePressedKey(clickedKey);
+    this.shiftDown = this.pressedButtons.includes('ShiftRight') || this.pressedButtons.includes('ShiftLeft');
+    this.updateKeyboardButtons();
+  }
+
+  toggleAlt(clickedKey) {
+    this.togglePressedKey(clickedKey);
+    this.alt = this.pressedButtons.includes('AltRight') || this.pressedButtons.includes('AltLeft');
+    this.updateKeyboardButtons();
+  }
+
+  toggleCtrl(clickedKey) {
+    this.togglePressedKey(clickedKey);
+    this.ctrl = this.pressedButtons.includes('ControlRight') || this.pressedButtons.includes('ControlLeft');
     this.updateKeyboardButtons();
   }
 
   changeLang() {
-    if (this.lang === 'eng') {
-      this.lang = 'rus';
-    } else {
-      this.lang = 'eng';
+    if (this.pressedButtons.includes('AltLeft')
+      && this.pressedButtons.includes('ControlLeft')
+      && this.pressedButtons.length === 2) {
+      if (this.lang === 'eng') {
+        this.lang = 'rus';
+      } else {
+        this.lang = 'eng';
+      }
+      localStorage.setItem('virtualKeyboard:lang', this.lang);
+      this.updateKeyboardButtons();
     }
-    localStorage.setItem('virtualKeyboard:lang', this.lang);
-    this.updateKeyboardButtons();
+  }
+
+  getKeyText(keyCode) {
+    let keyText = '';
+    if (this.shiftDown) {
+      keyText = KEYS[this.lang][keyCode].shiftDown;
+      if (this.capsLock && keyText.toUpperCase() !== keyText.toLowerCase()) {
+        keyText = KEYS[this.lang][keyCode].shiftUp;
+      }
+    } else if (this.capsLock) {
+      keyText = KEYS[this.lang][keyCode].capsLock;
+    } else {
+      keyText = KEYS[this.lang][keyCode].shiftUp;
+    }
+    return keyText;
   }
 
   initLang() {
@@ -189,5 +292,13 @@ export default class Keyboard {
     localStorage.setItem('virtualKeyboard:lang', 'eng');
     this.lang = 'eng';
     return 'eng';
+  }
+
+  togglePressedKey(key) {
+    if (this.pressedButtons.includes(key)) {
+      this.pressedButtons.splice(this.pressedButtons.indexOf(key), 1);
+    } else {
+      this.pressedButtons.push(key);
+    }
   }
 }
