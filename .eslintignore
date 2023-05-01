@@ -1,2 +1,5 @@
-package.json
 webpack.*
+server.js
+dist
+node_modules
+.idea
