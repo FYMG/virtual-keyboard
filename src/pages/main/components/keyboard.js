@@ -375,7 +375,7 @@ export default class Keyboard {
   }
 
   getKeyText(keyCode) {
-    let keyText = '';
+    let keyText;
     if (this.shiftDown) {
       keyText = KEYS[this.lang][keyCode].shiftDown;
       if (this.capsLock && keyText.toUpperCase() !== keyText.toLowerCase()) {
