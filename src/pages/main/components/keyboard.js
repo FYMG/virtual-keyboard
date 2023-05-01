@@ -1,6 +1,3 @@
-// const RU_CHAR_SET = [];
-/* eslint-disable no-console */
-
 import { KEYS, KEYS_LAYOUT } from './keys';
 
 const KEYBOARD_STYLE = {
@@ -9,6 +6,7 @@ const KEYBOARD_STYLE = {
 };
 const KEYS_STYLE = {
   key: 'keyboard__key',
+  keyActive: 'keyboard__key_active',
   space: 'keyboard__key_space',
   capsLock: 'keyboard__key_caps',
   capsLockActive: 'keyboard__key_caps_active',
@@ -43,8 +41,6 @@ export default class Keyboard {
     this.textAreaLink = document.querySelector('.virtual-input');
     this.buttonLinks = [];
     this.capsLock = false;
-    this.alt = false;
-    this.ctrl = false;
     this.shiftDown = false;
     this.pressedButtons = [];
     this.lang = this.initLang();
@@ -57,7 +53,17 @@ export default class Keyboard {
       AltRight: [this.toggleAlt],
       ControlLeft: [this.toggleCtrl, this.changeLang],
       ControlRight: [this.toggleCtrl],
-      default: [() => {}],
+      Enter: [this.insertEnter],
+      Tab: [this.insertTab],
+      KeyA: [this.insertButtonText],
+      Backspace: [this.pressBackspace],
+      Delete: [this.pressDel],
+      ArrowUp: [this.pressArrow],
+      ArrowDown: [this.pressArrow],
+      ArrowLeft: [this.pressArrow],
+      ArrowRight: [this.pressArrow],
+      MetaLeft: [this.pressMeta],
+      default: [this.insertButtonText],
     };
   }
 
@@ -73,161 +79,190 @@ export default class Keyboard {
     });
     this.updateKeyboardButtons();
     keyboard.append(keyboardKeys);
+    this.addKeyboardEventListener();
     return keyboard;
   }
 
   createKeyboardButton(key) {
     const button = document.createElement('button');
-    const keyEvent = (event) => {
-      console.log(event);
+    button.className = KEYS_STYLE.key;
+    button.setAttribute('data-key', key);
+    this.addMouseEventListenerToButton(button);
+    return button;
+  }
+
+  addMouseEventListenerToButton(button) {
+    const mouseListener = (event) => {
       let clickedKey = event.target.getAttribute('data-key');
       if (!this.lastItteractedKey) {
         this.lastItteractedKey = clickedKey;
       }
       clickedKey = this.lastItteractedKey === clickedKey && event.type === 'mouseup' ? clickedKey : this.lastItteractedKey;
-      if (Object.keys(this.KEYS_EVENTS).includes(clickedKey)) {
-        this.KEYS_EVENTS[clickedKey].forEach((callback) => {
-          callback.bind(this)(clickedKey);
-        });
-      } else {
-        this.KEYS_EVENTS.default.forEach((callback) => {
-          callback.bind(this)(clickedKey);
-        });
+      if (event.type === 'mousedown' && this.pressedButtons.includes(clickedKey)) {
+        button.dispatchEvent(new MouseEvent('mouseup'));
+        this.lastItteractedKey = null;
       }
+      this.activateKeyEvents(clickedKey);
       this.lastItteractedKey = event.type === 'mousedown' ? clickedKey : null;
     };
-    button.className = KEYS_STYLE.key;
-    button.setAttribute('data-key', key);
-    button.addEventListener('mousedown', keyEvent);
-    button.addEventListener('mouseup', keyEvent);
-    return button;
+    button.addEventListener('mousedown', mouseListener);
+    button.addEventListener('mouseup', mouseListener);
+  }
+
+  activateKeyEvents(key) {
+    if (Object.keys(this.KEYS_EVENTS).includes(key)) {
+      this.KEYS_EVENTS[key].forEach((callback) => {
+        callback.bind(this)(key);
+      });
+    } else {
+      this.KEYS_EVENTS.default.forEach((callback) => {
+        callback.bind(this)(key);
+      });
+    }
+  }
+
+  addKeyboardEventListener() {
+    const KeyboardListener = (event) => {
+      event.preventDefault();
+      const clickedKey = event.code;
+      if (event.type === 'keydown' && this.pressedButtons.includes(clickedKey)) {
+        document.body.dispatchEvent(new KeyboardEvent('keyup', { code: clickedKey }));
+      }
+      this.activateKeyEvents(clickedKey);
+    };
+    document.body.addEventListener('keydown', KeyboardListener);
+    document.body.addEventListener('keyup', KeyboardListener);
   }
 
   updateKeyboardButtons() {
     this.buttonLinks.map((button) => {
       const key = button.getAttribute('data-key');
-      const updatedButton = button;
+      const updateButton = button;
       switch (key) {
         case 'Space': {
-          updatedButton.classList.add(KEYS_STYLE.space);
-          updatedButton.textContent = KEYS_TEXT.space;
+          updateButton.classList.add(KEYS_STYLE.space);
+          updateButton.textContent = KEYS_TEXT.space;
           break;
         }
         case 'CapsLock': {
           if (this.capsLock) {
-            updatedButton.classList.add(KEYS_STYLE.capsLockActive);
+            updateButton.classList.add(KEYS_STYLE.capsLockActive);
           } else {
-            updatedButton.classList.remove(KEYS_STYLE.capsLockActive);
+            updateButton.classList.remove(KEYS_STYLE.capsLockActive);
           }
-          updatedButton.classList.add(KEYS_STYLE.capsLock, KEYS_STYLE.medium);
-          updatedButton.textContent = KEYS_TEXT.capsLock;
+          updateButton.classList.add(KEYS_STYLE.capsLock, KEYS_STYLE.medium);
+          updateButton.textContent = KEYS_TEXT.capsLock;
           break;
         }
         case 'MetaLeft': {
-          updatedButton.classList.add(KEYS_STYLE.meta);
-          updatedButton.innerText = KEYS_TEXT.meta;
+          updateButton.classList.add(KEYS_STYLE.meta);
+          updateButton.innerText = KEYS_TEXT.meta;
           break;
         }
         case ('ShiftLeft'): {
-          if (this.shiftDown) {
-            updatedButton.classList.add(KEYS_STYLE.shiftActive);
+          if (this.pressedButtons.includes('ShiftLeft')) {
+            updateButton.classList.add(KEYS_STYLE.shiftActive);
           } else {
-            updatedButton.classList.remove(KEYS_STYLE.shiftActive);
+            updateButton.classList.remove(KEYS_STYLE.shiftActive);
           }
-          updatedButton.classList.add(KEYS_STYLE.shift, KEYS_STYLE.medium);
-          updatedButton.textContent = KEYS_TEXT.shift;
+          updateButton.classList.add(KEYS_STYLE.shift, KEYS_STYLE.medium);
+          updateButton.textContent = KEYS_TEXT.shift;
           break;
         }
         case ('ShiftRight'): {
-          if (this.shiftDown) {
-            updatedButton.classList.add(KEYS_STYLE.shiftActive);
+          if (this.pressedButtons.includes('ShiftRight')) {
+            updateButton.classList.add(KEYS_STYLE.shiftActive);
           } else {
-            updatedButton.classList.remove(KEYS_STYLE.shiftActive);
+            updateButton.classList.remove(KEYS_STYLE.shiftActive);
           }
-          updatedButton.classList.add(KEYS_STYLE.shift, KEYS_STYLE.medium);
-          updatedButton.textContent = KEYS_TEXT.shift;
+          updateButton.classList.add(KEYS_STYLE.shift, KEYS_STYLE.medium);
+          updateButton.textContent = KEYS_TEXT.shift;
           break;
         }
         case ('Enter'): {
-          updatedButton.classList.add(KEYS_STYLE.medium);
-          updatedButton.textContent = KEYS_TEXT.enter;
+          updateButton.classList.add(KEYS_STYLE.medium);
+          updateButton.textContent = KEYS_TEXT.enter;
           break;
         }
         case ('Backspace'): {
           button.classList.add(KEYS_STYLE.medium);
-          updatedButton.textContent = KEYS_TEXT.backspace;
+          updateButton.textContent = KEYS_TEXT.backspace;
           break;
         }
         case ('ArrowLeft'): {
-          updatedButton.textContent = KEYS_TEXT.arrowLeft;
+          updateButton.textContent = KEYS_TEXT.arrowLeft;
           break;
         }
         case ('ArrowRight'): {
-          updatedButton.textContent = KEYS_TEXT.arrowRight;
+          updateButton.textContent = KEYS_TEXT.arrowRight;
           break;
         }
         case ('ArrowUp'): {
-          updatedButton.textContent = KEYS_TEXT.arrowUp;
+          updateButton.textContent = KEYS_TEXT.arrowUp;
           break;
         }
         case ('ArrowDown'): {
-          updatedButton.textContent = KEYS_TEXT.arrowDown;
+          updateButton.textContent = KEYS_TEXT.arrowDown;
           break;
         }
         case ('Tab'): {
-          updatedButton.classList.add(KEYS_STYLE.medium);
-          updatedButton.classList.add(KEYS_STYLE.tab);
-          updatedButton.textContent = KEYS_TEXT.tab;
+          updateButton.classList.add(KEYS_STYLE.medium);
+          updateButton.classList.add(KEYS_STYLE.tab);
+          updateButton.textContent = KEYS_TEXT.tab;
           break;
         }
         case ('AltRight'): {
-          if (this.alt) {
-            updatedButton.classList.add(KEYS_STYLE.altActive);
+          if (this.pressedButtons.includes('AltRight')) {
+            updateButton.classList.add(KEYS_STYLE.altActive);
           } else {
-            updatedButton.classList.remove(KEYS_STYLE.altActive);
+            updateButton.classList.remove(KEYS_STYLE.altActive);
           }
-          updatedButton.classList.add(KEYS_STYLE.alt);
-          updatedButton.textContent = KEYS_TEXT.alt;
+          updateButton.classList.add(KEYS_STYLE.alt);
+          updateButton.textContent = KEYS_TEXT.alt;
           break;
         }
         case ('AltLeft'): {
-          if (this.alt) {
-            updatedButton.classList.add(KEYS_STYLE.altActive);
+          if (this.pressedButtons.includes('AltLeft')) {
+            updateButton.classList.add(KEYS_STYLE.altActive);
           } else {
-            updatedButton.classList.remove(KEYS_STYLE.altActive);
+            updateButton.classList.remove(KEYS_STYLE.altActive);
           }
-          updatedButton.classList.add(KEYS_STYLE.alt);
-          updatedButton.textContent = KEYS_TEXT.alt;
+          updateButton.classList.add(KEYS_STYLE.alt);
+          updateButton.textContent = KEYS_TEXT.alt;
           break;
         }
         case ('ControlRight'): {
-          if (this.ctrl) {
-            updatedButton.classList.add(KEYS_STYLE.ctrlActive);
+          if (this.pressedButtons.includes('ControlRight')) {
+            updateButton.classList.add(KEYS_STYLE.ctrlActive);
           } else {
-            updatedButton.classList.remove(KEYS_STYLE.ctrlActive);
+            updateButton.classList.remove(KEYS_STYLE.ctrlActive);
           }
-          updatedButton.classList.add(KEYS_STYLE.ctrl);
-          updatedButton.textContent = KEYS_TEXT.ctrl;
+          updateButton.classList.add(KEYS_STYLE.ctrl);
+          updateButton.textContent = KEYS_TEXT.ctrl;
           break;
         }
         case ('ControlLeft'): {
-          if (this.ctrl) {
-            updatedButton.classList.add(KEYS_STYLE.ctrlActive);
+          if (this.pressedButtons.includes('ControlLeft')) {
+            updateButton.classList.add(KEYS_STYLE.ctrlActive);
           } else {
-            updatedButton.classList.remove(KEYS_STYLE.ctrlActive);
+            updateButton.classList.remove(KEYS_STYLE.ctrlActive);
           }
-          updatedButton.classList.add(KEYS_STYLE.ctrl);
-          updatedButton.textContent = KEYS_TEXT.ctrl;
+          updateButton.classList.add(KEYS_STYLE.ctrl);
+          updateButton.textContent = KEYS_TEXT.ctrl;
           break;
         }
         default: {
-          updatedButton.textContent = this.getKeyText(key);
+          updateButton.textContent = this.getKeyText(key);
           break;
         }
       }
-      return updatedButton;
+      if (this.pressedButtons.includes(key)) {
+        button.classList.add(KEYS_STYLE.keyActive);
+      } else {
+        button.classList.remove(KEYS_STYLE.keyActive);
+      }
+      return updateButton;
     });
-    console.log(`lang: ${this.lang}, caps: ${this.capsLock}, shift: ${this.shiftDown}`);
   }
 
   toggleCapsLock(clickedKey) {
@@ -253,6 +288,75 @@ export default class Keyboard {
   toggleCtrl(clickedKey) {
     this.togglePressedKey(clickedKey);
     this.ctrl = this.pressedButtons.includes('ControlRight') || this.pressedButtons.includes('ControlLeft');
+    this.updateKeyboardButtons();
+  }
+
+  insertButtonText(clickedKey) {
+    this.togglePressedKey(clickedKey);
+    if (this.pressedButtons.includes(clickedKey)) {
+      this.insertTextAtTextAreaCursor(this.getKeyText(clickedKey));
+    }
+    this.updateKeyboardButtons();
+  }
+
+  insertEnter(clickedKey) {
+    this.togglePressedKey(clickedKey);
+    if (this.pressedButtons.includes(clickedKey)) {
+      this.insertTextAtTextAreaCursor('\r\n');
+    }
+    this.updateKeyboardButtons();
+  }
+
+  insertTab(clickedKey) {
+    this.togglePressedKey(clickedKey);
+    if (this.pressedButtons.includes(clickedKey)) {
+      this.insertTextAtTextAreaCursor('    ');
+    }
+    this.updateKeyboardButtons();
+  }
+
+  pressBackspace(clickedKey) {
+    this.togglePressedKey(clickedKey);
+    if (this.pressedButtons.includes(clickedKey)) {
+      this.deleteTextAtTextAreaCursor(true);
+    }
+    this.updateKeyboardButtons();
+  }
+
+  pressDel(clickedKey) {
+    this.togglePressedKey(clickedKey);
+    if (this.pressedButtons.includes(clickedKey)) {
+      this.deleteTextAtTextAreaCursor(false, true);
+    }
+    this.updateKeyboardButtons();
+  }
+
+  pressArrow(clickedKey) {
+    this.togglePressedKey(clickedKey);
+    if (this.pressedButtons.includes(clickedKey)) {
+      this.navigateTextAreaCursor(
+        clickedKey === 'ArrowUp',
+        clickedKey === 'ArrowLeft',
+        clickedKey === 'ArrowDown',
+        clickedKey === 'ArrowRight',
+      );
+    }
+    this.updateKeyboardButtons();
+  }
+
+  pressMeta(clickedKey) {
+    this.togglePressedKey(clickedKey);
+    this.updateKeyboardButtons();
+  }
+
+  selectAll() {
+    this.preventNext = true;
+    if (this.pressedButtons.includes('ControlLeft')
+      && this.pressedButtons.includes('KeyA')
+      && this.pressedButtons.length === 2) {
+      this.textAreaLink.selectionStart = 0;
+      this.textAreaLink.selectionEnd = this.textAreaLink.value.length;
+    }
     this.updateKeyboardButtons();
   }
 
@@ -299,6 +403,91 @@ export default class Keyboard {
       this.pressedButtons.splice(this.pressedButtons.indexOf(key), 1);
     } else {
       this.pressedButtons.push(key);
+    }
+  }
+
+  insertTextAtTextAreaCursor(text) {
+    this.textAreaLink.focus();
+    const startPos = this.textAreaLink.selectionStart;
+    const endPos = this.textAreaLink.selectionEnd;
+    this.textAreaLink.value = this.textAreaLink.value.substring(0, startPos)
+      + text
+      + this.textAreaLink.value.substring(endPos, this.textAreaLink.value.length);
+    const selectorPos = startPos + text.length;
+    this.textAreaLink.selectionStart = selectorPos;
+    this.textAreaLink.selectionEnd = selectorPos;
+  }
+
+  deleteTextAtTextAreaCursor(prev = false, next = false) {
+    this.textAreaLink.focus();
+    const startPos = this.textAreaLink.selectionStart;
+    const endPos = this.textAreaLink.selectionEnd;
+    if (startPos !== endPos) {
+      this.textAreaLink.value = this.textAreaLink.value.substring(0, startPos)
+        + this.textAreaLink.value.substring(endPos, this.textAreaLink.value.length);
+    } else {
+      if (prev) {
+        this.textAreaLink.value = this.textAreaLink.value.substring(0, startPos - 1)
+            + this.textAreaLink.value.substring(endPos, this.textAreaLink.value.length);
+      }
+      if (next) {
+        this.textAreaLink.value = this.textAreaLink.value.substring(0, startPos)
+            + this.textAreaLink.value.substring(endPos + 1, this.textAreaLink.value.length);
+      }
+    }
+  }
+
+  navigateTextAreaCursor(up = false, left = false, down = false, right = false) {
+    this.textAreaLink.focus();
+    const startPos = this.textAreaLink.selectionStart;
+    const endPos = this.textAreaLink.selectionEnd;
+    if (up) {
+      const separatorIndex = this.textAreaLink.value.substring(0, startPos).lastIndexOf('\n');
+      const nextSeparatorIndex = this.textAreaLink.value.substring(0, separatorIndex).lastIndexOf('\n');
+      const distance = startPos - separatorIndex;
+      if (separatorIndex === -1) {
+        return;
+      }
+      if ((separatorIndex - nextSeparatorIndex) > distance) {
+        this.textAreaLink.selectionStart = nextSeparatorIndex + distance;
+        this.textAreaLink.selectionEnd = nextSeparatorIndex + distance;
+      } else {
+        this.textAreaLink.selectionStart = separatorIndex;
+        this.textAreaLink.selectionEnd = separatorIndex;
+      }
+    }
+    if (down) {
+      const preSeparatorIndex = this.textAreaLink.value.substring(0, startPos).lastIndexOf('\n');
+      const postSeparatorIndex = startPos + this.textAreaLink.value.substring(startPos, this.textAreaLink.value.length).indexOf('\n');
+      const nextSeparatorIndex = this.textAreaLink.value.substring(postSeparatorIndex + 1, this.textAreaLink.value.length).indexOf('\n') === -1 ? this.textAreaLink.value.length : postSeparatorIndex + this.textAreaLink.value.substring(postSeparatorIndex + 1, this.textAreaLink.value.length).indexOf('\n');
+      if (this.textAreaLink.value.substring(startPos, this.textAreaLink.value.length).indexOf('\n') === -1) {
+        return;
+      }
+      if (nextSeparatorIndex < postSeparatorIndex + (startPos - preSeparatorIndex)) {
+        this.textAreaLink.selectionStart = nextSeparatorIndex + 1;
+        this.textAreaLink.selectionEnd = nextSeparatorIndex + 1;
+      } else {
+        this.textAreaLink.selectionStart = postSeparatorIndex + (startPos - preSeparatorIndex);
+        this.textAreaLink.selectionEnd = postSeparatorIndex + (startPos - preSeparatorIndex);
+      }
+    }
+    if (right) {
+      if (startPos !== endPos) {
+        this.textAreaLink.selectionStart = endPos;
+        this.textAreaLink.selectionEnd = endPos;
+      } else {
+        this.textAreaLink.selectionStart = startPos + 1;
+        this.textAreaLink.selectionEnd = startPos + 1;
+      }
+    }
+    if (left) {
+      if (startPos !== endPos || startPos === 0) {
+        this.textAreaLink.selectionStart = startPos;
+        this.textAreaLink.selectionEnd = startPos;
+      } else {
+        this.textAreaLink.selectionStart = startPos - 1;
+        this.textAreaLink.selectionEnd = startPos - 1;
+      }
     }
   }
 }
