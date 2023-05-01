@@ -18,6 +18,7 @@ const KEYS_STYLE = {
   ctrlActive: 'keyboard__key_ctrl_active',
   medium: 'keyboard__key_medium',
   meta: 'keyboard__key_win',
+  metaActive: 'keyboard__key_win_active',
   tab: 'keyboard__key_tab',
 };
 const KEYS_TEXT = {
@@ -158,6 +159,11 @@ export default class Keyboard {
           break;
         }
         case 'MetaLeft': {
+          if (this.pressedButtons.includes('MetaLeft')) {
+            updateButton.classList.add(KEYS_STYLE.metaActive);
+          } else {
+            updateButton.classList.remove(KEYS_STYLE.metaActive);
+          }
           updateButton.classList.add(KEYS_STYLE.meta);
           updateButton.innerText = KEYS_TEXT.meta;
           break;
