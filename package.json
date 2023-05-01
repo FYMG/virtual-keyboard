@@ -10,7 +10,8 @@
     "lint": "eslint . --ext .js --fix",
     "watch": "webpack --watch",
     "serve": "webpack serve",
-    "deploy": "webpack --mode=production --node-env=production --env outdir=distprod && node server.js"
+    "predeploy": "npm run build:prod",
+    "deploy": "node server.js"
   },
   "keywords": [],
   "author": "",
@@ -29,6 +30,7 @@
     "eslint-plugin-react-hooks": "^4.3.0",
     "eslint-webpack-plugin": "^4.0.1",
     "express": "^4.18.2",
+    "gh-pages": "^5.0.0",
     "html-loader": "^4.2.0",
     "html-webpack-plugin": "^5.5.1",
     "mini-css-extract-plugin": "^2.7.5",
