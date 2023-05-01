@@ -125,6 +125,9 @@ export default class Keyboard {
     const KeyboardListener = (event) => {
       event.preventDefault();
       const clickedKey = event.code;
+      if (!KEYS_LAYOUT.includes(clickedKey)) {
+        return;
+      }
       if (event.type === 'keydown' && this.pressedButtons.includes(clickedKey)) {
         document.body.dispatchEvent(new KeyboardEvent('keyup', { code: clickedKey }));
       }
