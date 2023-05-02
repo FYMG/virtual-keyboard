@@ -1,0 +1,72 @@
+$color-light: hsl(0, 0%, 80%)
+$color-dark: hsl(0, 0%, 10%)
+$shadow-light: -6px -6px 12px hsl(0, 0%, 60%), -3px -3px 6px hsl(0, 0%, 60%, 0.03), 3px 3px 6px hsl(0, 0%, 60%, 0.3), 6px 6px 12px hsl(0, 0%, 60%, 0.3),
+$shadow-dark: -6px -6px 12px hsl(0, 0%, 100%, 0.01), -3px -3px 6px hsl(0, 0%, 100%, 0.03), 3px 3px 6px hsl(0, 0%, 0%, 0.3), 6px 6px 12px hsl(0, 0%, 0%, 0.3)
+.keyboard
+  bottom: 0
+  width: 100%
+  position: fixed
+  overflow: hidden
+  // .keyboard__keys
+  &__keys
+    font-size: 1.05rem
+    box-sizing: border-box
+    padding: 10px
+    z-index: 7
+    margin: 0 auto
+    display: grid
+    grid-template-columns: repeat(15, 1fr)
+    grid-template-rows: repeat(5, 1fr)
+    max-width: 1280px
+    border-radius: 15px
+    background: $color-dark
+    @media (max-width: 550px)
+      padding: 5px
+      border-radius: 5px
+  // .keyboard__key
+  &__key
+    text-align: center
+    font-family: 'Oswald', sans-serif
+    font-weight: 700
+    height: 50px
+    border-radius: 5px
+    color: $color-light
+    background: $color-dark
+    border: 2px solid hsla(0, 0%, 25%, 0.2)
+    box-shadow: $shadow-dark
+    @media (max-width: 550px)
+      font-size: 0.6rem
+    @media (max-width: 430px)
+      font-size: 0.4rem
+    @media (max-width: 730px)
+      height: auto
+
+    &:hover
+      transform: translate3D(0, 0, 30px)
+
+    &:active,
+    &_active
+      transform: translate3D(0, 0, 45px)
+      border-color: $color-light
+      box-shadow: $shadow-light
+    // .keyboard__key_space
+    &_space
+      grid-column-end: span 6
+    // .keyboard__key_caps
+    &_caps
+      grid-column-end: span 2
+    // .keyboard__key_caps_active
+    &_caps_active
+      position: relative
+      &::before
+        content: ''
+        position: absolute
+        display: block
+        width: 3px
+        height: 3px
+        border-radius: 100%
+        background: $color-light
+    // .keyboard__key_medium
+    &_medium
+      grid-column-end: span 2
+
